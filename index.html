@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>EditFlow AI — Edición de vídeo potenciada por IA</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
             --bg-primary: #0a0a0a;
@@ -13,18 +16,66 @@
             --text-secondary: #a0a0a0;
             --text-muted: #666666;
             --accent: #f97316;
+            --accent-hover: #ea580c;
             --border: #262626;
         }
         * { margin: 0; padding: 0; box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
             background: var(--bg-primary);
             color: var(--text-primary);
             line-height: 1.6;
+            overflow-x: hidden;
         }
         .container { max-width: 1200px; margin: 0 auto; padding: 0 5%; }
         
-        /* Nav */
+        /* Timeline Background */
+        .timeline-bg {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: 0;
+            opacity: 0.03;
+        }
+        .timeline-track {
+            position: absolute;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--accent), transparent);
+            animation: timelineMove 20s linear infinite;
+        }
+        .timeline-track:nth-child(1) { top: 20%; width: 60%; }
+        .timeline-track:nth-child(2) { top: 40%; width: 40%; animation-delay: -5s; }
+        .timeline-track:nth-child(3) { top: 60%; width: 80%; animation-delay: -10s; }
+        .timeline-track:nth-child(4) { top: 80%; width: 50%; animation-delay: -15s; }
+        @keyframes timelineMove {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(200%); }
+        }
+
+        /* Film Strips */
+        .film-strip {
+            position: absolute;
+            width: 120px;
+            height: 80px;
+            border: 2px solid var(--border);
+            background: var(--bg-secondary);
+            opacity: 0.1;
+            border-radius: 4px;
+        }
+        .film-strip::before, .film-strip::after {
+            content: '';
+            position: absolute;
+            left: 0; right: 0;
+            height: 8px;
+            background: repeating-linear-gradient(90deg, var(--border) 0px, var(--border) 6px, transparent 6px, transparent 12px);
+        }
+        .film-strip::before { top: -2px; }
+        .film-strip::after { bottom: -2px; }
+        .film-strip.left { left: -60px; top: 30%; transform: rotate(-15deg); }
+        .film-strip.right { right: -60px; top: 60%; transform: rotate(15deg); }
+
+        /* Navigation */
         nav {
             position: fixed;
             top: 0;
@@ -41,15 +92,28 @@
         .logo {
             font-size: 1.5rem;
             font-weight: 700;
-            background: linear-gradient(135deg, #f97316, #ec4899);
+            background: linear-gradient(135deg, var(--accent), #ec4899);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .logo::before {
+            content: '';
+            width: 8px;
+            height: 8px;
+            background: var(--accent);
+            border-radius: 2px;
+            transform: rotate(45deg);
         }
         .nav-links { display: flex; gap: 2rem; align-items: center; }
         .nav-links a {
             color: var(--text-secondary);
             text-decoration: none;
             font-size: 0.9rem;
+            font-weight: 500;
+            transition: color 0.3s;
         }
         .nav-links a:hover { color: var(--text-primary); }
         .btn-primary {
@@ -61,8 +125,31 @@
             text-decoration: none;
             border: none;
             cursor: pointer;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
         }
-        
+        .btn-primary:hover {
+            background: var(--accent-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 40px rgba(249, 115, 22, 0.3);
+        }
+        .btn-secondary {
+            background: transparent;
+            color: var(--text-primary);
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            text-decoration: none;
+            border: 1px solid var(--border);
+            transition: all 0.3s;
+        }
+        .btn-secondary:hover {
+            background: var(--bg-tertiary);
+            border-color: var(--text-secondary);
+        }
+
         /* Hero */
         .hero {
             min-height: 100vh;
@@ -70,64 +157,357 @@
             align-items: center;
             justify-content: center;
             padding: 8rem 5% 5rem;
-            text-align: center;
+            position: relative;
+            overflow: hidden;
         }
-        .hero h1 {
-            font-size: clamp(2.5rem, 6vw, 4rem);
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: -50%; left: -50%;
+            width: 200%; height: 200%;
+            background: radial-gradient(circle at 50% 50%, rgba(249, 115, 22, 0.1) 0%, transparent 50%);
+            animation: pulse 4s ease-in-out infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 0.5; }
+            50% { transform: scale(1.1); opacity: 0.8; }
+        }
+        .hero-content {
+            max-width: 900px;
+            text-align: center;
+            position: relative;
+            z-index: 1;
+        }
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            padding: 0.5rem 1rem;
+            border-radius: 2rem;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-bottom: 2rem;
+        }
+        .badge::before {
+            content: '';
+            width: 8px;
+            height: 8px;
+            background: #22c55e;
+            border-radius: 50%;
+            animation: blink 2s infinite;
+        }
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        h1 {
+            font-size: clamp(2.5rem, 6vw, 4.5rem);
             font-weight: 700;
+            line-height: 1.1;
             margin-bottom: 1.5rem;
         }
         .gradient-text {
-            background: linear-gradient(135deg, #f97316, #ec4899);
+            background: linear-gradient(135deg, var(--accent), #ec4899);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
         .hero-subtitle {
+            font-size: clamp(1.1rem, 2vw, 1.35rem);
             color: var(--text-secondary);
-            font-size: 1.25rem;
             max-width: 600px;
-            margin: 0 auto 2rem;
+            margin: 0 auto 3rem;
         }
-        
+        .hero-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        /* Timeline Preview */
+        .timeline-preview {
+            margin-top: 4rem;
+            padding: 2rem;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: 1rem;
+            position: relative;
+        }
+        .timeline-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+        .timeline-ruler {
+            display: flex;
+            gap: 2rem;
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            margin-bottom: 0.5rem;
+        }
+        .timeline-track-container {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .timeline-row {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            height: 32px;
+            background: var(--bg-secondary);
+            border-radius: 4px;
+            padding: 0 0.5rem;
+            position: relative;
+        }
+        .timeline-label {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            width: 60px;
+            text-align: right;
+        }
+        .timeline-clips {
+            display: flex;
+            gap: 2px;
+            flex: 1;
+            height: 100%;
+            align-items: center;
+        }
+        .clip {
+            height: 24px;
+            border-radius: 3px;
+        }
+        .clip.a-roll { background: linear-gradient(90deg, #f97316, #ea580c); width: 40%; }
+        .clip.b-roll { background: linear-gradient(90deg, #06b6d4, #0891b2); width: 25%; margin-left: 5%; }
+        .clip.audio { background: linear-gradient(90deg, #8b5cf6, #7c3aed); width: 60%; height: 16px; }
+        .playhead {
+            position: absolute;
+            left: 45%;
+            top: 0; bottom: 0;
+            width: 2px;
+            background: #22c55e;
+            z-index: 10;
+        }
+        .playhead::before {
+            content: '';
+            position: absolute;
+            top: -6px;
+            left: -5px;
+            width: 0; height: 0;
+            border-left: 6px solid transparent;
+            border-right: 6px solid transparent;
+            border-top: 8px solid #22c55e;
+        }
+
         /* Sections */
-        .section {
-            padding: 6rem 5%;
-        }
-        .section-header {
-            text-align: center;
-            margin-bottom: 3rem;
-        }
+        .problem { padding: 6rem 5%; background: var(--bg-secondary); }
+        .section-header { text-align: center; margin-bottom: 4rem; }
         .section-label {
             text-transform: uppercase;
             font-size: 0.85rem;
+            font-weight: 600;
             color: var(--accent);
             letter-spacing: 0.1em;
-        }
-        h2 {
-            font-size: clamp(1.8rem, 4vw, 2.5rem);
-            margin: 1rem 0;
-        }
-        
-        /* Form */
-        .form-section {
-            background: var(--bg-secondary);
-            padding: 4rem 5%;
-        }
-        .form-section h2 {
-            text-align: center;
             margin-bottom: 1rem;
         }
-        .form-section > p {
-            text-align: center;
+        h2 {
+            font-size: clamp(2rem, 4vw, 3rem);
+            font-weight: 700;
+            margin-bottom: 1rem;
+        }
+        .section-subtitle {
             color: var(--text-secondary);
+            font-size: 1.1rem;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        /* Problem Cards */
+        .problem-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+        }
+        .problem-card {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: 1rem;
+            padding: 2rem;
+            text-align: center;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+        .problem-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--accent), #ec4899);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .problem-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--accent);
+        }
+        .problem-card:hover::before { opacity: 1; }
+        .problem-icon { font-size: 2.5rem; margin-bottom: 1rem; }
+        .problem-card h3 { font-size: 1.1rem; font-weight: 600; margin-bottom: 0.5rem; }
+        .problem-card p { color: var(--text-secondary); font-size: 0.95rem; }
+
+        /* Solution */
+        .solution { padding: 6rem 5%; }
+        .solution-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 4rem;
+            align-items: center;
+        }
+        .solution-text h2 { margin-bottom: 1.5rem; }
+        .solution-text p {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
             margin-bottom: 2rem;
         }
-        .email-form {
-            max-width: 500px;
+        .feature-list { list-style: none; }
+        .feature-list li {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+        .feature-list li::before {
+            content: '✓';
+            background: linear-gradient(135deg, var(--accent), #ec4899);
+            color: white;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+        .solution-visual {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: 1rem;
+            padding: 3rem;
+        }
+        .workflow-step {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            transition: all 0.3s;
+        }
+        .workflow-step:hover {
+            border-color: var(--accent);
+            transform: translateX(5px);
+        }
+        .step-number {
+            background: linear-gradient(135deg, var(--accent), #ec4899);
+            color: white;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+        .workflow-step h4 { font-weight: 600; margin-bottom: 0.25rem; }
+        .workflow-step p { color: var(--text-secondary); font-size: 0.9rem; }
+
+        /* Features */
+        .features { padding: 6rem 5%; background: var(--bg-secondary); }
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 2rem;
+            margin-top: 4rem;
+        }
+        .feature-card {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: 1rem;
+            padding: 2.5rem;
+            transition: all 0.3s;
+            position: relative;
+        }
+        .feature-card::after {
+            content: '';
+            position: absolute;
+            bottom: 0; left: 0; right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--accent), #ec4899);
+            transform: scaleX(0);
+            transition: transform 0.3s;
+        }
+        .feature-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--accent);
+        }
+        .feature-card:hover::after { transform: scaleX(1); }
+        .feature-icon { font-size: 2.5rem; margin-bottom: 1.5rem; }
+        .feature-card h3 { font-size: 1.25rem; font-weight: 600; margin-bottom: 1rem; }
+        .feature-card p { color: var(--text-secondary); font-size: 0.95rem; line-height: 1.7; }
+
+        /* Proof */
+        .proof { padding: 6rem 5%; }
+        .proof-card {
+            background: linear-gradient(135deg, var(--bg-secondary), var(--bg-tertiary));
+            border: 1px solid var(--border);
+            border-radius: 1.5rem;
+            padding: 4rem;
+            text-align: center;
+            max-width: 900px;
             margin: 0 auto;
+        }
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 3rem;
+            margin: 3rem 0;
+        }
+        .stat-item h3 {
+            font-size: 3rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--accent), #ec4899);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .stat-item p { color: var(--text-secondary); font-size: 0.95rem; margin-top: 0.5rem; }
+
+        /* CTA Form */
+        .cta { padding: 6rem 5%; background: var(--bg-secondary); text-align: center; }
+        .cta h2 { margin-bottom: 1rem; }
+        .cta > p {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+            max-width: 500px;
+            margin: 0 auto 2rem;
+        }
+        .email-form {
             display: flex;
             flex-direction: column;
             gap: 1rem;
+            max-width: 500px;
+            margin: 0 auto;
+            text-align: left;
         }
         .form-group {
             display: flex;
@@ -137,6 +517,7 @@
         .form-group label {
             font-size: 0.9rem;
             color: var(--text-secondary);
+            font-weight: 500;
         }
         .form-group input,
         .form-group select,
@@ -147,29 +528,48 @@
             padding: 0.75rem 1rem;
             color: var(--text-primary);
             font-size: 1rem;
+            font-family: inherit;
+        }
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            border-color: var(--accent);
+            outline: none;
         }
         .form-group textarea {
-            min-height: 100px;
             resize: vertical;
+            min-height: 100px;
+        }
+        .form-group select {
+            cursor: pointer;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23666' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 1rem center;
         }
         .checkbox-group {
             display: flex;
             align-items: flex-start;
             gap: 0.75rem;
+            margin-top: 0.5rem;
             font-size: 0.85rem;
             color: var(--text-secondary);
         }
-        .checkbox-group input { margin-top: 3px; }
+        .checkbox-group input {
+            width: 18px;
+            height: 18px;
+            margin-top: 2px;
+            accent-color: var(--accent);
+        }
         .checkbox-group a { color: var(--accent); }
-        
+        .email-form button { margin-top: 1rem; }
+
         /* Modal */
         .modal-overlay {
             display: none;
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
             background: rgba(0, 0, 0, 0.8);
             backdrop-filter: blur(10px);
             z-index: 2000;
@@ -189,19 +589,15 @@
         .modal-icon { font-size: 4rem; margin-bottom: 1rem; }
         .modal-content h3 {
             font-size: 1.75rem;
-            background: linear-gradient(135deg, #f97316, #ec4899);
+            background: linear-gradient(135deg, var(--accent), #ec4899);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             margin-bottom: 1rem;
         }
-        .modal-content p { color: var(--text-secondary); margin-bottom: 2rem; }
-        
+        .modal-content p { color: var(--text-secondary); margin-bottom: 2rem; line-height: 1.7; }
+
         /* Footer */
-        footer {
-            padding: 3rem 5%;
-            border-top: 1px solid var(--border);
-            text-align: center;
-        }
+        footer { padding: 3rem 5%; border-top: 1px solid var(--border); text-align: center; }
         .footer-links {
             display: flex;
             justify-content: center;
@@ -216,23 +612,44 @@
         }
         .footer-links a:hover { color: var(--accent); }
         footer p { color: var(--text-muted); font-size: 0.85rem; }
-        
+
         @media (max-width: 768px) {
             .nav-links { display: none; }
+            .solution-content { grid-template-columns: 1fr; }
+            .stats { grid-template-columns: 1fr; gap: 2rem; }
+            .hero-buttons { flex-direction: column; }
+            .timeline-preview { display: none; }
             .footer-links { flex-direction: column; gap: 1rem; }
         }
     </style>
 </head>
 <body>
+    <!-- Background Effects -->
+    <div class="timeline-bg">
+        <div class="timeline-track"></div>
+        <div class="timeline-track"></div>
+        <div class="timeline-track"></div>
+        <div class="timeline-track"></div>
+    </div>
+    <div class="film-strip left"></div>
+    <div class="film-strip right"></div>
+
+    <!-- Navigation -->
     <nav>
         <div class="logo">EditFlow</div>
         <div class="nav-links">
+            <a href="#problem">El Problema</a>
+            <a href="#solucion">Solución</a>
+            <a href="#caracteristicas">Características</a>
+            <a href="#demo">Demo</a>
             <a href="#acceso" class="btn-primary">Solicitar Acceso</a>
         </div>
     </nav>
 
+    <!-- Hero Section -->
     <section class="hero">
-        <div class="container">
+        <div class="hero-content">
+            <div class="badge">Versión Beta Privada Disponible</div>
             <h1>
                 Edita vídeos <span class="gradient-text">10x más rápido</span>.<br>
                 Sin abandonar DaVinci Resolve.
@@ -241,11 +658,181 @@
                 El primer editor de vídeo con IA que se integra completamente en DaVinci Resolve. 
                 Automatiza el corte inicial mientras tú te centras en lo creativo.
             </p>
-            <a href="#acceso" class="btn-primary">Unirme a la beta</a>
+            <div class="hero-buttons">
+                <a href="#acceso" class="btn-primary">Unirme a la beta</a>
+                <a href="#demo" class="btn-secondary">Ver cómo funciona</a>
+            </div>
+
+            <!-- Timeline Preview -->
+            <div class="timeline-preview">
+                <div class="timeline-header">
+                    <span>📹 A-Roll</span>
+                    <span>🎬 B-Roll</span>
+                    <span>🔊 Audio</span>
+                </div>
+                <div class="timeline-ruler">
+                    <span>00:00</span>
+                    <span>00:15</span>
+                    <span>00:30</span>
+                    <span>00:45</span>
+                    <span>01:00</span>
+                </div>
+                <div class="timeline-track-container">
+                    <div class="timeline-row">
+                        <span class="timeline-label">V1</span>
+                        <div class="timeline-clips"><div class="clip a-roll"></div></div>
+                        <div class="playhead"></div>
+                    </div>
+                    <div class="timeline-row">
+                        <span class="timeline-label">V2</span>
+                        <div class="timeline-clips"><div class="clip b-roll"></div></div>
+                    </div>
+                    <div class="timeline-row">
+                        <span class="timeline-label">A1</span>
+                        <div class="timeline-clips"><div class="clip audio"></div></div>
+                    </div>
+                </div>
+            </div>
         </div>
     </section>
 
-    <section class="form-section" id="acceso">
+    <!-- Problem Section -->
+    <section class="problem" id="problem">
+        <div class="container">
+            <div class="section-header">
+                <p class="section-label">El Problema</p>
+                <h2>La edición te consume el 80% del tiempo de producción</h2>
+                <p class="section-subtitle">Los editores perdemos horas en tareas repetitivas que no aportan valor creativo.</p>
+            </div>
+            <div class="problem-grid">
+                <div class="problem-card">
+                    <div class="problem-icon">⏱️</div>
+                    <h3>Revisar material crudo</h3>
+                    <p>Horas buscando soundbites de valor en horas de grabación</p>
+                </div>
+                <div class="problem-card">
+                    <div class="problem-icon">✂️</div>
+                    <h3>Cortes manuales</h3>
+                    <p>Eliminar pausas, muletillas y silencios uno a uno</p>
+                </div>
+                <div class="problem-card">
+                    <div class="problem-icon">📱</div>
+                    <h3>Versiones para cada plataforma</h3>
+                    <p>Crear Instagram, YouTube, TikTok desde cero cada vez</p>
+                </div>
+                <div class="problem-card">
+                    <div class="problem-icon">😰</div>
+                    <h3>Burnout creativo</h3>
+                    <p>Menos proyectos, menos ingresos, más frustración</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Solution Section -->
+    <section class="solution" id="solucion">
+        <div class="container">
+            <div class="solution-content">
+                <div class="solution-text">
+                    <p class="section-label">La Solución</p>
+                    <h2>Tu asistente de edición dentro de Resolve</h2>
+                    <p>EditFlow analiza tu material, entiende el contenido hablado y visual, y construye automáticamente un timeline editado siguiendo tus reglas editoriales.</p>
+                    <ul class="feature-list">
+                        <li>Transcripción optimizada para español</li>
+                        <li>Análisis visual de talking heads y movimiento</li>
+                        <li>Selección inteligente de soundbites</li>
+                        <li>B-roll contextual automático</li>
+                    </ul>
+                </div>
+                <div class="solution-visual">
+                    <div class="workflow-step">
+                        <div class="step-number">1</div>
+                        <div>
+                            <h4>Selecciona objetivo</h4>
+                            <p>Instagram, YouTube, o custom</p>
+                        </div>
+                    </div>
+                    <div class="workflow-step">
+                        <div class="step-number">2</div>
+                        <div>
+                            <h4>Añade brief editorial</h4>
+                            <p>Guía al modelo (opcional)</p>
+                        </div>
+                    </div>
+                    <div class="workflow-step">
+                        <div class="step-number">3</div>
+                        <div>
+                            <h4>Genera timeline</h4>
+                            <p>Listo para color y sonido</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="features" id="caracteristicas">
+        <div class="container">
+            <div class="section-header">
+                <p class="section-label">Ventajas Clave</p>
+                <h2>Diseñado para editores profesionales</h2>
+                <p class="section-subtitle">Tecnología de punta que respeta tu flujo de trabajo y tu privacidad.</p>
+            </div>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <span class="feature-icon">🏠</span>
+                    <h3>100% Local</h3>
+                    <p>Tu material nunca sale de tu máquina. Sin subir vídeos a la nube, sin depender de conexión, privacidad total para clientes sensibles.</p>
+                </div>
+                <div class="feature-card">
+                    <span class="feature-icon">🎬</span>
+                    <h3>Integración Nativa</h3>
+                    <p>No aprendes nueva interfaz. Panel integrado en DaVinci Resolve Workflow Integrations. Exporta directamente a tu flujo de color y audio.</p>
+                </div>
+                <div class="feature-card">
+                    <span class="feature-icon">🧠</span>
+                    <h3>IA Multimodal Real</h3>
+                    <p><strong>Oye:</strong> Whisper optimizado para español.<br><strong>Ve:</strong> Análisis visual con Qwen VL.<br><strong>Piensa:</strong> DeepSeek para coherencia narrativa.</p>
+                </div>
+                <div class="feature-card">
+                    <span class="feature-icon">⚡</span>
+                    <h3>Ahorro Medible</h3>
+                    <p>De 3-4 horas a 20-30 minutos en corte inicial. Más tiempo para color, sonido y creatividad. Más proyectos por mes.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Proof Section -->
+    <section class="proof" id="demo">
+        <div class="container">
+            <div class="proof-card">
+                <p class="section-label">Caso Real</p>
+                <h2>De 150 clips a timeline en 8 minutos</h2>
+                <div class="stats">
+                    <div class="stat-item">
+                        <h3>45min</h3>
+                        <p>Material de entrada</p>
+                    </div>
+                    <div class="stat-item">
+                        <h3>8min</h3>
+                        <p>Proceso completo</p>
+                    </div>
+                    <div class="stat-item">
+                        <h3>~3h</h3>
+                        <p>Tiempo ahorrado</p>
+                    </div>
+                </div>
+                <p style="color: var(--text-secondary);">
+                    Entrevista completa + 15 fotos de B-roll → Timeline de 8 minutos listo para color y sonido.
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section with Form -->
+    <section class="cta" id="acceso">
         <div class="container">
             <h2>Recupera horas de edición cada semana</h2>
             <p>Únete a la beta privada. Acceso prioritario para los primeros editores profesionales.</p>
@@ -274,7 +861,7 @@
                 </div>
 
                 <div class="form-group">
-                    <label>Plataforma principal *</label>
+                    <label>Plataforma de edición principal *</label>
                     <select name="plataforma" required>
                         <option value="" disabled selected>Selecciona</option>
                         <option value="davinci">DaVinci Resolve</option>
@@ -290,7 +877,7 @@
                 </div>
 
                 <div class="checkbox-group">
-                    <input type="checkbox" id="privacidad" name="privacidad" required>
+                    <input type="checkbox" id="privacidad" required>
                     <label for="privacidad">
                         Acepto la <a href="privacidad.html" target="_blank">Política de Privacidad</a> 
                         y el <a href="legal.html" target="_blank">Aviso Legal</a>. *
@@ -301,44 +888,47 @@
                 <input type="hidden" name="_captcha" value="false">
                 <input type="hidden" name="_template" value="table">
                 <input type="hidden" name="_next" value="https://amartinrojarvis.github.io/editflow-ai/?gracias=1">
-                <input type="hidden" name="_autoresponse" value="Gracias por tu interés en EditFlow AI. Hemos recibido tu solicitud y nos pondremos en contacto contigo pronto.">
+                <input type="hidden" name="_autoresponse" value="Gracias por tu interés en EditFlow AI. Hemos recibido tu solicitud y nos pondremos en contacto contigo pronto con acceso a la beta.">
 
                 <button type="submit" class="btn-primary">Solicitar acceso a la beta</button>
             </form>
         </div>
     </section>
 
+    <!-- Thank You Modal -->
     <div class="modal-overlay" id="graciasModal">
         <div class="modal-content">
             <div class="modal-icon">🎉</div>
             <h3>¡Gracias por tu interés!</h3>
             <p>Hemos recibido tu solicitud correctamente. Nuestro equipo revisará tu perfil y nos pondremos en contacto contigo en las próximas 24-48 horas con acceso a la beta privada.</p>
-            <a href="/" class="btn-primary">Volver</a>
+            <a href="/" class="btn-primary">Volver a la página principal</a>
         </div>
     </div>
 
+    <!-- Footer -->
     <footer>
         <div class="footer-links">
             <a href="privacidad.html">Política de Privacidad</a>
             <a href="legal.html">Aviso Legal</a>
+            <a href="cookies.html">Política de Cookies</a>
         </div>
         <p>© 2026 EditFlow AI. Todos los derechos reservados.</p>
     </footer>
 
     <script>
+        // Thank You Modal
         const modal = document.getElementById('graciasModal');
-        
         if (window.location.search.includes('gracias=1')) {
             modal.classList.add('show');
             if (window.history.replaceState) {
                 window.history.replaceState({}, document.title, window.location.pathname);
             }
         }
-
         modal.addEventListener('click', function(e) {
             if (e.target === modal) modal.classList.remove('show');
         });
 
+        // Form validation
         document.getElementById('betaForm').addEventListener('submit', function(e) {
             if (!document.getElementById('privacidad').checked) {
                 e.preventDefault();
